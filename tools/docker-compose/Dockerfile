@@ -5,6 +5,8 @@ ARG UID=0
 # Add ansible-devel so that we get collections!
 ADD tools/docker-compose/ansible_nightly.repo /etc/yum.repos.d/ansible_nightly.repo
 
+RUN echo "Cache miss"
+
 # sync with installer/roles/image_build/templates/Dockerfile.j2
 RUN dnf -y update && \
   dnf -y install epel-release 'dnf-command(config-manager)' && \
