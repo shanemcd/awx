@@ -59,6 +59,8 @@ UI_RELEASE_FLAG_FILE = awx/ui/.release_built
 
 I18N_FLAG_FILE = .i18n_built
 
+PYTEST_NUM_PROCESSES ?= auto
+
 .PHONY: awx-link clean clean-tmp clean-venv requirements requirements_dev \
 	develop refresh adduser migrate dbchange runserver \
 	receiver test test_unit test_coverage coverage_html \
@@ -378,7 +380,7 @@ test:
 	@if [ "$(VENV_BASE)" ]; then \
 		. $(VENV_BASE)/awx/bin/activate; \
 	fi; \
-	PYTHONDONTWRITEBYTECODE=1 py.test -p no:cacheprovider -n auto $(TEST_DIRS)
+	PYTHONDONTWRITEBYTECODE=1 py.test -p no:cacheprovider -n $(PYTEST_NUM_PROCESSES) $(TEST_DIRS)
 	cd awxkit && $(VENV_BASE)/awx/bin/tox -re py2,py3
 	awx-manage check_migrations --dry-run --check  -n 'vNNN_missing_migration_file'
 
