@@ -1427,8 +1427,16 @@ class BaseTask(object):
 
             self.dispatcher = CallbackQueueDispatcher()
 
-            receptor_job = AWXReceptorJob(self, params)
-            res = receptor_job.run()
+            if isinstance(self.instance, SystemJob):
+                cwd = self.build_cwd(self.instance, private_data_dir)
+                res = ansible_runner.interface.run(project_dir=cwd,
+                                                   event_handler=self.event_handler,
+                                                   finished_callback=self.finished_callback,
+                                                   status_handler=self.status_handler,
+                                                   **params)
+            else:
+                receptor_job = AWXReceptorJob(self, params)
+                res = receptor_job.run()
 
             status = res.status
             rc = res.rc
