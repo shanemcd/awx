@@ -921,7 +921,7 @@ class BaseTask(object):
         Create a temporary directory for job-related files.
         '''
         path = tempfile.mkdtemp(prefix='awx_%s_' % instance.pk, dir=settings.AWX_PROOT_BASE_PATH)
-        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
         if settings.AWX_CLEANUP_PATHS:
             self.cleanup_paths.append(path)
         runner_project_folder = os.path.join(path, 'project')
@@ -976,17 +976,19 @@ class BaseTask(object):
                     f = os.fdopen(handle, 'w')
                     f.write(data)
                     f.close()
-                    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+                    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
                 private_data_files['credentials'][credential] = path
             for credential, data in private_data.get('certificates', {}).items():
                 artifact_dir = os.path.join(private_data_dir, 'artifacts', str(self.instance.id))
                 if not os.path.exists(artifact_dir):
-                    os.makedirs(artifact_dir, mode=0o700)
+                    original_umask = os.umask(0)
+                    os.makedirs(artifact_dir, mode=0o770)
+                    os.umask(original_umask)
                 path = os.path.join(artifact_dir, 'ssh_key_data-cert.pub')
                 with open(path, 'w') as f:
                     f.write(data)
                     f.close()
-                os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+                os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
         return private_data_files
 
     def build_passwords(self, instance, runtime_passwords):
@@ -1013,7 +1015,7 @@ class BaseTask(object):
 
             results_dir = os.path.join(private_data_dir, 'artifacts/playbook_profiling')
             if not os.path.isdir(results_dir):
-                os.makedirs(results_dir, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC)
+                os.makedirs(results_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
             # FIXME: develop some better means of referencing paths inside containers
             container_results_dir = os.path.join('/runner', 'artifacts/playbook_profiling')
 
@@ -1032,20 +1034,22 @@ class BaseTask(object):
     def _write_extra_vars_file(self, private_data_dir, vars, safe_dict={}):
         env_path = os.path.join(private_data_dir, 'env')
         try:
-            os.mkdir(env_path, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC)
+            original_umask = os.umask(0)
+            os.mkdir(env_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+            os.umask(original_umask)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
         path = os.path.join(env_path, 'extravars')
-        handle = os.open(path, os.O_RDWR | os.O_CREAT, stat.S_IREAD | stat.S_IWRITE)
+        handle = os.open(path, os.O_RDWR | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
         f = os.fdopen(handle, 'w')
         if settings.ALLOW_JINJA_IN_EXTRA_VARS == 'always':
             f.write(yaml.safe_dump(vars))
         else:
             f.write(safe_dump(vars, safe_dict))
         f.close()
-        os.chmod(path, stat.S_IRUSR)
+        os.chmod(path, stat.S_IRUSR | stat.S_IRGRP)
         return path
 
     def add_awx_venv(self, env):
@@ -1098,10 +1102,11 @@ class BaseTask(object):
         }
         json_data = json.dumps(script_data)
         path = os.path.join(private_data_dir, 'inventory')
-        os.makedirs(path, mode=0o700)
+        os.makedirs(path, mode=0o770)
+        os.chmod(path, stat.S_IRUSR | stat.S_IXUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IWGRP)
         fn = os.path.join(path, 'hosts')
         with open(fn, 'w') as f:
-            os.chmod(fn, stat.S_IRUSR | stat.S_IXUSR | stat.S_IWUSR)
+            os.chmod(fn, stat.S_IRUSR | stat.S_IXUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IWGRP)
             f.write('#! /usr/bin/env python3\n# -*- coding: utf-8 -*-\nprint(%r)\n' % json_data)
         return fn
 
@@ -1111,17 +1116,19 @@ class BaseTask(object):
     def write_args_file(self, private_data_dir, args):
         env_path = os.path.join(private_data_dir, 'env')
         try:
-            os.mkdir(env_path, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC)
+            original_umask = os.umask(0)
+            os.mkdir(env_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+            os.umask(original_umask)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
 
         path = os.path.join(env_path, 'cmdline')
-        handle = os.open(path, os.O_RDWR | os.O_CREAT, stat.S_IREAD | stat.S_IWRITE)
+        handle = os.open(path, os.O_RDWR | os.O_CREAT, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
         f = os.fdopen(handle, 'w')
         f.write(ansible_runner.utils.args2cmdline(*args))
         f.close()
-        os.chmod(path, stat.S_IRUSR)
+        os.chmod(path, stat.S_IRUSR | stat.S_IRGRP)
         return path
 
     def build_cwd(self, instance, private_data_dir):
@@ -2242,9 +2249,13 @@ class RunProjectUpdate(BaseTask):
         # re-create root project folder if a natural disaster has destroyed it
         if not os.path.exists(settings.PROJECTS_ROOT):
             os.mkdir(settings.PROJECTS_ROOT)
+        os.chmod(settings.PROJECTS_ROOT, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
         project_path = instance.project.get_project_path(check_if_exists=False)
         if not os.path.exists(project_path):
-            os.makedirs(project_path)  # used as container mount
+            original_umask = os.umask(0)
+            os.makedirs(project_path, 0o770, exist_ok=True)  # used as container mount
+            os.umask(original_umask)
+        os.chmod(project_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_ISGID)
 
         self.acquire_lock(instance)
 
@@ -2300,17 +2311,14 @@ class RunProjectUpdate(BaseTask):
             git_repo = git.Repo(project_path)
             if not os.path.exists(destination_folder):
                 os.mkdir(destination_folder, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC)
-            tmp_branch_name = 'awx_internal/{}'.format(uuid4())
             # always clone based on specific job revision
             if not p.scm_revision:
                 raise RuntimeError('Unexpectedly could not determine a revision to run from project.')
-            source_branch = git_repo.create_head(tmp_branch_name, p.scm_revision)
-            # git clone must take file:// syntax for source repo or else options like depth will be ignored
+            job_repo = git.Repo.init(destination_folder)
             source_as_uri = Path(project_path).as_uri()
-            git.Repo.clone_from(
-                source_as_uri, destination_folder, branch=source_branch,
-                depth=1, single_branch=True,  # shallow, do not copy full history
-            )
+            remote = job_repo.create_remote('origin', source_as_uri)
+            remote.fetch(p.scm_revision, depth=1)
+            job_repo.git.reset('--hard', p.scm_revision)
             # submodules copied in loop because shallow copies from local HEADs are ideal
             # and no git clone submodule options are compatible with minimum requirements
             for submodule in git_repo.submodules:
@@ -2318,8 +2326,6 @@ class RunProjectUpdate(BaseTask):
                 subrepo_destination_folder = os.path.abspath(os.path.join(destination_folder, submodule.path))
                 subrepo_uri = Path(subrepo_path).as_uri()
                 git.Repo.clone_from(subrepo_uri, subrepo_destination_folder, depth=1, single_branch=True)
-            # force option is necessary because remote refs are not counted, although no information is lost
-            git_repo.delete_head(tmp_branch_name, force=True)
         else:
             copy_tree(project_path, destination_folder, preserve_symlinks=1)
 
@@ -3103,7 +3109,6 @@ class AWXReceptorJob:
     def transmit(self, _socket):
         if not settings.IS_K8S and self.work_type == 'local':
             self.runner_params['only_transmit_kwargs'] = True
-
         ansible_runner.interface.run(streamer='transmit',
                                      _output=_socket.makefile('wb'),
                                      **self.runner_params)
