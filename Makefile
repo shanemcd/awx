@@ -564,6 +564,9 @@ awx/projects:
 # Community docker-compose installation
 # -----------------------------------------------------
 
+migrate-local-docker-to-community-compose:
+	ansible-playbook tools/ansible/migrate.yml -e @tools/docker-community/vars.yml
+
 run-awx: awx/projects
 	# Template sources
 	ansible-playbook -i tools/ansible/inventory tools/ansible/sources.yml
