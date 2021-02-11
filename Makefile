@@ -575,8 +575,10 @@ run-awx: awx/projects template-awx stop-local-docker
 	cd tools/docker-community && CURRENT_UID=$(shell id -u) OS="$(shell docker info | grep 'Operating System')" TAG=$(COMPOSE_TAG) DOCKER_TAG_BASE=$(DOCKER_TAG_BASE) docker-compose -f docker-compose-community.yml $(COMPOSE_UP_OPTS) up --no-recreate task
 
 build-awx:
-	ansible-playbook tools/ansible/dockerfile.yml -e dockerfile_dest=../docker-community
-	docker build -t ansible/awx_devel -f tools/docker-community/Dockerfile \
+	ansible-playbook tools/ansible/dockerfile.yml \
+	    -e dockerfile_name=Dockerfile.community \
+	    -e template_dest=_build_community -v
+	docker build -t ansible/awx_devel -f Dockerfile.community \
 		--cache-from=$(DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG) .
 	docker tag ansible/awx_devel $(DOCKER_TAG_BASE)/awx:$(COMPOSE_TAG)
 
@@ -619,9 +621,8 @@ docker-compose-clean: awx/projects
 docker-compose-build:
 	ansible-playbook tools/ansible/dockerfile.yml -e build_dev=True
 	docker build -t ansible/awx_devel \
-			--file tools/docker-compose/Dockerfile \
 	    --build-arg BUILDKIT_INLINE_CACHE=1 \
-	    --cache-from=$(DEV_DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG) ./tools/docker-compose
+	    --cache-from=$(DEV_DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG) .
 	docker tag ansible/awx_devel $(DEV_DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG)
 	#docker push $(DEV_DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG)
 

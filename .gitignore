@@ -158,3 +158,5 @@ use_dev_supervisor.txt
 /_build/
 /_build_kube_dev/
 /Dockerfile.kube-dev
+/_build_community/
+/Dockerfile.community
