@@ -12,7 +12,10 @@ postgresql_image: "postgres:{{postgresql_version}}"
 
 compose_start_containers: true
 upgrade_postgres: false
-awx_docker_actual_image: "${DOCKER_TAG_BASE}/{{ awx_image }}:{{ awx_version }}"
+
+awx_docker_actual_image: "${DOCKER_TAG_BASE}{{ awx_image }}:{{ awx_version }}"
+# You can specify a custom image, for example:
+# awx_docker_actual_image: "awx:18.0.0"
 
 
 # Otherwise the setup playbook will install the official Ansible images. Versions may

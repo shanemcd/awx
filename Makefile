@@ -564,21 +564,11 @@ awx/projects:
 # Community docker-compose installation
 # -----------------------------------------------------
 
-template-awx:
-	ansible-playbook tools/ansible/sources.yml -e @tools/docker-community/vars.yml 
-
-run-awx: awx/projects template-awx
+run-awx: awx/projects
+	# Template sources
+	ansible-playbook tools/ansible/sources.yml -e @tools/docker-community/vars.yml
 	# Run containers
 	cd tools/docker-community && TAG=$(COMPOSE_TAG) DOCKER_TAG_BASE=$(DOCKER_TAG_BASE) docker-compose -f docker-compose-community.yml $(COMPOSE_UP_OPTS) up task
-
-build-awx: #TODO use build.yml instead and add docs for building the image
-	ansible-playbook tools/ansible/dockerfile.yml \
-	    -e dockerfile_name=Dockerfile.community \
-	    -e template_dest=_build_community -v
-	docker build -t ansible/awx_devel -f Dockerfile.community \
-		--cache-from=$(DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG) .
-	docker tag ansible/awx_devel $(DOCKER_TAG_BASE)/awx:$(COMPOSE_TAG)
-
 
 # Docker isolated rampart
 docker-compose-isolated: awx/projects
