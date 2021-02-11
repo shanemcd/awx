@@ -5,7 +5,7 @@
     path: "{{ sources_dest }}"
     state: directory
 
-- name: Render supervisor configs
+- name: Render files
   template:
     src: "{{ item }}.j2"
     dest: "{{ sources_dest }}/{{ item }}"

@@ -564,15 +564,12 @@ awx/projects:
 # Community docker-compose installation
 # -----------------------------------------------------
 
-stop-local-docker:
-	docker rm -f awx_task awx_web awx_postgres awx_redis
-
 template-awx:
 	ansible-playbook tools/ansible/sources.yml -e @tools/docker-community/vars.yml 
 
-run-awx: awx/projects template-awx stop-local-docker
+run-awx: awx/projects template-awx
 	# Run containers
-	cd tools/docker-community && CURRENT_UID=$(shell id -u) OS="$(shell docker info | grep 'Operating System')" TAG=$(COMPOSE_TAG) DOCKER_TAG_BASE=$(DOCKER_TAG_BASE) docker-compose -f docker-compose-community.yml $(COMPOSE_UP_OPTS) up --no-recreate task
+	cd tools/docker-community && TAG=$(COMPOSE_TAG) DOCKER_TAG_BASE=$(DOCKER_TAG_BASE) docker-compose -f docker-compose-community.yml $(COMPOSE_UP_OPTS) up task
 
 build-awx:
 	ansible-playbook tools/ansible/dockerfile.yml \
@@ -591,7 +588,7 @@ COMPOSE_UP_OPTS ?=
 
 # Docker Compose Development environment
 docker-compose: docker-auth awx/projects
-	cd tools/docker-compose && CURRENT_UID=$(shell id -u) OS="$(shell docker info | grep 'Operating System')" TAG=$(COMPOSE_TAG) DEV_DOCKER_TAG_BASE=$(DEV_DOCKER_TAG_BASE) docker-compose -f docker-compose.yml $(COMPOSE_UP_OPTS) up --no-recreate awx
+	cd tools/docker-compose && CURRENT_UID=$(shell id -u) OS="$(shell docker info | grep 'Operating System')" TAG=$(COMPOSE_TAG) DEV_DOCKER_TAG_BASE=$(DEV_DOCKER_TAG_BASE) docker-compose -f docker-compose.yml $(COMPOSE_UP_OPTS) up awx
 
 docker-compose-cluster: docker-auth awx/projects
 	CURRENT_UID=$(shell id -u) TAG=$(COMPOSE_TAG) DEV_DOCKER_TAG_BASE=$(DEV_DOCKER_TAG_BASE) docker-compose -f tools/docker-compose-cluster.yml up
