@@ -23,8 +23,15 @@ migrate your data to the Community AWX Docker Compose installation by doing the 
 1. Set the following variables.....
 2. Run the migrate playbook to migrate your data to the new postgresql container and convert the data directory to a volume mount.  
 
+If you had a custom pgdocker or awxcompose location, you will need to set these variables:
+
 ```
-ansible-playbook -i inventory migrate.yml
+postgres_data_dir: "~/.awx/pgdocker"
+old_docker_compose_dir: "~/.awx/awxcompose"
+```
+
+```
+ansible-playbook -i inventory migrate.yml -e "migrate_local_docker=true"
 ```
 
 
