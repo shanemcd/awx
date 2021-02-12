@@ -566,7 +566,7 @@ awx/projects:
 
 run-awx: awx/projects
 	# Template sources
-	ansible-playbook tools/ansible/sources.yml -e @tools/docker-community/vars.yml
+	ansible-playbook -i tools/ansible/inventory tools/ansible/sources.yml
 	# Run containers
 	cd tools/docker-community && TAG=$(COMPOSE_TAG) DOCKER_TAG_BASE=$(DOCKER_TAG_BASE) docker-compose -f docker-compose-community.yml $(COMPOSE_UP_OPTS) up task
 
