@@ -18,7 +18,9 @@ make awx-release
 ## Migrating Data from Local Docker
 
 If you are migrating data from a Local Docker installation (17.0.1 and prior), you can 
-migrate your data to the Community AWX Docker Compose installation by doing the following.  
+migrate your data to the Community AWX Docker Compose installation via the migrate.yml playbook, or by using the manual steps described below.  
+
+### Migrate data with migrate.yml
 
 1. Set the following variables.....
 2. Run the migrate playbook to migrate your data to the new postgresql container and convert the data directory to a volume mount.  
@@ -31,8 +33,60 @@ old_docker_compose_dir: "~/.awx/awxcompose"
 ```
 
 ```
-ansible-playbook -i inventory migrate.yml -e "migrate_local_docker=true"
+ansible-playbook -i inventory migrate.yml -e "migrate_local_docker=true" -e "postgres_data_dir=~/.awx/pgdocker" -e "old_docker_compose_dir=~/.awx/awxcompose" --ask-become
 ```
+
+> Note: This requires you to provide your become passwords to be able to access the postgresql data directory.  
+
+3. Change directory to the top of your awx checkout and start your containers
+
+```
+make run-awx
+```
+
+4. After ensuring your data has been successfully migrated, you may delete your old data directory (typically stored at `~/.awx/pgdocker`). 
+
+
+### Migrating data manually
+
+1. With Local Docker still running, perform a pg_dumpall:
+
+> Note: If Local Docker is no longer running
+`docker-compose -f ~/.awx/awxcompose/docker-compose.yml up postgres`
+
+docker-compose -f ~/.awx/awxcompose/docker-compose.yml exec postgres pg_dumpall -U awx > awx_dump.sql
+
+
+2. Remove all local docker containers (specifically awx_postgres)
+
+```
+docker -f rm awx_postgres
+```
+
+3. Template the new docker-community compose
+
+```
+ansible-playbook -i tools/ansible/inventory tools/ansible/sources.yml
+```
+
+4. Start a container with a volume (using the new tools/docker-community/docker-compose-community.yml)
+
+```
+docker-compose -f ../docker-community/docker-compose-community.yml up postgres
+```
+
+5. Restore to new `awx_postgres`
+```
+docker-compose -f ../docker-community/docker-compose-community.yml exec -T postgres psql -U awx -d awx -p 5432 < awx_dump.sql
+```
+
+6. Run the docker-community compose to start the containers
+
+```
+docker-compose -f ../docker-community/docker-compose-community.yml up task
+```
+
+7. Check to ensure your data migration was successful, then you can delete your the `awx_dump.sql` backup and your old data directory.  
 
 
 ## Building your own image

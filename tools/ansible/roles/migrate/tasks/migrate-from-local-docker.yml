@@ -1,46 +1,35 @@
 ---
 
-- name: Stop AWX containers before migrating postgres so that the old postgres container does not get used
+- name: Remove awx_postgres to ensure consistent start state
+  shell: |
+    docker rm -f awx_postgres
+
+- name: Start Local Docker database container
+  docker_compose:
+    project_src: "{{ old_docker_compose_dir }}"
+    services:
+      - postgres
+    state: present
+
+- name: Database dump to local filesystem
+  shell: |
+    docker-compose -f {{ old_docker_compose_dir }}/docker-compose.yml exec -T postgres pg_dumpall -U {{ pg_username }} > awx_dump.sql
+
+- name: Stop AWX containers so the old postgres container does not get used
   docker_compose:
     project_src: "{{ old_docker_compose_dir }}"
     state: absent
   ignore_errors: true
 
-- name: Create Data Volume
-  docker_volume:
-    name: awx_pg_data
-    state: present
+- name: Start docker-community postgres container
+  shell: |
+    docker-compose -f ../docker-community/docker-compose-community.yml up -d postgres
 
-- debug:
-    msg: "{{ postgres_data_dir }}"
+- name: Restore to new postgres container
+  shell: |
+    docker-compose -f ../docker-community/docker-compose-community.yml exec -T postgres psql -U {{ pg_username }} -d {{ pg_database }} -p {{ pg_port }} < awx_dump.sql
 
-
-- name: Migrate data from bind mount to new volume
-  block:
-  - name: Get full path of postgres data dir
-    shell: "echo {{ postgres_data_dir }}"
-    register: fq_postgres_data_dir
-  # 
-  # - name: Register temporary docker container
-  #   set_fact:
-  #     container_command: "docker run --rm -v '{{ fq_postgres_data_dir.stdout }}:/var/lib/postgresql' centos:8 bash -c "
-  
-  - name: Create temporary container
-    docker_container:
-      name: awx_tmps
-      image: centos
-      state: started
-      recreate: true
-      command: sh
-      volumes:
-        awx_pg_data:/data
-
-  - name: Copy data into new volume
-    become: true
-    shell: |
-      docker cp {{ fq_postgres_data_dir }}/12/data awx_tmp:/data
-
-  - name: Clean up temporary container
-    community.general.docker_container:
-      name: awx_tmp
-      state: absent
+- name: Clean up temporary awx db dump
+  file:
+    path: awx_dump.sql
+    state: absent
