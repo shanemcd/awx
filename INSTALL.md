@@ -29,7 +29,7 @@ This document provides a guide for installing AWX.
     + [Post-install](#post-install-1)
     + [Accessing AWX](#accessing-awx-1)
     + [SSL Termination](#ssl-termination)
-  * [Docker-Compose](#docker-compose)
+  * [Community Docker Compose](#community-docker-compose)
     + [Prerequisites](#prerequisites-3)
     + [Pre-install steps](#pre-install-steps-2)
       - [Deploying to a remote host](#deploying-to-a-remote-host)
@@ -84,9 +84,9 @@ Before you can run a deployment, you'll need the following installed in your loc
 - [Git](https://git-scm.com/) Requires Version 1.8.4+
 - Python 3.6+
 - [Node 14.x LTS version](https://nodejs.org/en/download/)
-    + This is only required if you're [building your own container images](#official-vs-building-images) with `use_container_for_build=false`
+    + This is only required if you're [building your own container images](#official-vs-building-images)
 - [NPM 6.x LTS](https://docs.npmjs.com/)
-    + This is only required if you're [building your own container images](#official-vs-building-images) with `use_container_for_build=false`
+    + This is only required if you're [building your own container images](#official-vs-building-images)
 
 ### System Requirements
 
@@ -100,14 +100,14 @@ The system that runs the AWX service will need to satisfy the following requirem
 
 ### Choose a deployment platform
 
-We currently support running AWX as a containerized application using Docker images deployed to either an OpenShift cluster, a Kubernetes cluster, or docker-compose. The remainder of this document will walk you through the process of building the images, and deploying them to either platform.
+We currently support running AWX as a containerized application using Docker images deployed to either an OpenShift cluster, a Kubernetes cluster, or Community Docker Compose. The remainder of this document will walk you through the process of building the images, and deploying them to either platform.
 
 The [installer](./installer) directory contains an [inventory](./installer/inventory) file, and a playbook, [install.yml](./installer/install.yml). You'll begin by setting variables in the inventory file according to the platform you wish to use, and then you'll start the image build and deployment process by running the playbook.
 
 In the sections below, you'll find deployment details and instructions for each platform:
 - [OpenShift](#openshift)
 - [Kubernetes](#kubernetes)
-- [Docker Compose](#docker-compose).
+- [Community Docker Compose](#community-docker-compose).
 
 ### Official vs Building Images
 
@@ -130,28 +130,15 @@ If these variables are present then all deployments will use these hosted images
 
 > Multiple versions are provided. `latest` always pulls the most recent. You may also select version numbers at different granularities: 1, 1.0, 1.0.1, 1.0.0.123
 
-*use_container_for_build*
-
-> Use a local distribution build container image for building the AWX package. This is helpful if you don't want to bother installing the build-time dependencies as it is taken care of already.
-
-
-## Upgrading from previous versions
-
-Upgrading AWX involves rerunning the install playbook. Download a newer release from [https://github.com/ansible/awx/releases](https://github.com/ansible/awx/releases) and re-populate the inventory file with your customized variables.
-
-For convenience, you can create a file called `vars.yml`:
+To build your own container use the `build.yml` playbook:
 
 ```
-admin_password: 'adminpass'
-pg_password: 'pgpass'
-secret_key: 'mysupersecret'
+ansible-playbook -i inventory build.yml -e awx_version=test-build
 ```
 
-And pass it to the installer:
+The resulting image will automatically be pushed to a registry if `docker_registry` is defined. 
 
-```
-$ ansible-playbook -i inventory install.yml -e @vars.yml
-```
+
 
 ## OpenShift
 
@@ -437,7 +424,7 @@ If your provider is able to allocate an IP Address from the Ingress controller t
 Unlike Openshift's `Route` the Kubernetes `Ingress` doesn't yet handle SSL termination. As such the default configuration will only expose AWX through HTTP on port 80. You are responsible for configuring SSL support until support is added (either to Kubernetes or AWX itself).
 
 
-## Docker-Compose
+## Community Docker Compose
 
 ### Prerequisites
 
@@ -447,6 +434,10 @@ Unlike Openshift's `Route` the Kubernetes `Ingress` doesn't yet handle SSL termi
 - [Docker Compose](https://docs.docker.com/compose/install/).
 
 ### Pre-install steps
+
+#### Migrating data from Local Docker to Community Docker Compose
+
+When Local Docker playbook was removed (`installer/install.yml`) and replaced with the Community Docker Compose, we also moved from using bind-mounts, to volumes.  As a result, when upgrading from AWX <17.0.1, an extra migration step is required.  Please see the Community Docker Compose README.md](./tools/docker-community/README.md#migrating-data-manually) for information on how to migrate data from the old Local Docker install.  
 
 #### Deploying to a remote host
 
@@ -479,9 +470,6 @@ If you choose to use the official images then the remote host will be the one to
 
 Before starting the install process, review the [inventory](./installer/inventory) file, and uncomment and provide values for the following variables found in the `[all:vars]` section:
 
-*postgres_data_dir*
-
-> If you're using the default PostgreSQL container (see [PostgreSQL](#postgresql-1) below), provide a path that can be mounted to the container, and where the database can be persisted.
 
 *host_port*
 
@@ -495,9 +483,6 @@ Before starting the install process, review the [inventory](./installer/inventor
 
 > Optionally, provide the path to a file that contains a certificate and its private key. This needs to be a .pem-file
 
-*docker_compose_dir*
-
-> When using docker-compose, the `docker-compose.yml` file will be created there (default `~/.awx/awxcompose`).
 
 *custom_venv_dir*
 
@@ -544,31 +529,22 @@ If you wish to tag and push built images to a Docker registry, set the following
 
 #### PostgreSQL
 
-AWX requires access to a PostgreSQL database, and by default, one will be created and deployed in a container, and data will be persisted to a host volume. In this scenario, you must set the value of `postgres_data_dir` to a path that can be mounted to the container. When the container is stopped, the database files will still exist in the specified path.
+AWX requires access to a PostgreSQL database, and by default, one will be created and deployed in a container, and data will be persisted to a docker volume. When the container is stopped, the database files will still exist in the docker volume. 
 
 If you wish to use an external database, in the inventory file, set the value of `pg_hostname`, and update `pg_username`, `pg_password`, `pg_admin_password`, `pg_database`, and `pg_port` with the connection information.
 
+
 ### Run the installer
 
-If you are not pushing images to a Docker registry, start the install by running the following:
+After updating the inventory file with any custom values, run the make target from the root of your AWX clone.  
 
 ```bash
-# Set the working directory to installer
-$ cd installer
-
-# Run the Ansible playbook
-$ ansible-playbook -i inventory install.yml
+# Run the AWX Community docker-compose make target
+$ make run-awx
 ```
 
-If you're pushing built images to a repository, then use the `-e` option to pass the registry password as follows, replacing *password* with the password of the username assigned to `docker_registry_username` (note that you will also need to remove `dockerhub_base` and `dockerhub_version` from the inventory file):
+> Note: If you want to use a custom image, see the docker-community [README.md](./tools/docker-community/README.md#building-your-own-image) for more information.  
 
-```bash
-# Set the working directory to installer
-$ cd installer
-
-# Run the Ansible playbook
-$ ansible-playbook -i inventory -e docker_registry_password=password install.yml
-```
 
 ### Post-install
 
@@ -638,6 +614,19 @@ Added instance awx to tower
 The AWX web server is accessible on the deployment host, using the *host_port* value set in the *inventory* file. The default URL is [http://localhost](http://localhost).
 
 You will prompted with a login dialog. The default administrator username is `admin`, and the password is `password`.
+
+
+### Upgrading from previous versions
+
+Upgrading AWX involves checking out the new source code and re-running the make target. Download a newer release from [https://github.com/ansible/awx/releases](https://github.com/ansible/awx/releases) and re-populate the inventory file with your customized variables.
+
+After updating the inventory file with any custom values, run the make target from the root of your AWX clone.  
+
+
+```bash
+# Run the AWX Community docker-compose make target
+$ make run-awx
+```
 
 
 # Installing the AWX CLI

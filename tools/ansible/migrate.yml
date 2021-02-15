@@ -1,5 +1,5 @@
 ---
-- name: Migrate data from old Local Docker to a new Docker Compose Community install
+- name: Migrate data for upgrades and from Local Docker installs
   hosts: localhost
   gather_facts: true
   roles:

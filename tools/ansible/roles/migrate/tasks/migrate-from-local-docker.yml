@@ -1,5 +1,6 @@
 ---
-
+  
+# Migrate data from old Local Docker to a new Docker Compose Community install
 - name: Remove awx_postgres to ensure consistent start state
   shell: |
     docker rm -f awx_postgres
