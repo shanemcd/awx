@@ -1,3 +1,6 @@
 ---
-sources_dest: '../docker-community/files'
-compose_name: 'docker-compose-community.yml'
+sources_dest: '../docker-compose/_sources'
+awx_image: ansible/awx
+# awx_image: ansible/awx:{{ awx_version }}
+
+compose_name: 'docker-compose.yml'

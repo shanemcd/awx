@@ -20,6 +20,11 @@
     dest: "{{ sources_dest }}/SECRET_KEY"
     mode: 0600
 
+- name: Get OS info for sdb
+  shell: |
+    docker info | grep 'Operating System'
+  register: os_info
+
 - name: Get user UID
   shell: id -u
   register: current_user
@@ -31,4 +36,4 @@
 - name: Render Docker-Compose
   template:
     src: docker-compose.yml.j2
-    dest: "{{ sources_dest }}/../{{ compose_name }}"
+    dest: "{{ sources_dest }}/{{ compose_name }}"

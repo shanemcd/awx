@@ -33,7 +33,7 @@ host_port_ssl=443
 #ssl_certificate=
 # Optional key file
 #ssl_certificate_key=
-docker_compose_dir="./files"
+docker_compose_dir="./_sources"
 
 # Required for Docker Compose Install if building the image on your own
 # Optional for Docker Compose Install if using Dockerhub or another pre-built registry

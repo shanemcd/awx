@@ -25,8 +25,8 @@ SCL_PREFIX ?=
 CELERY_SCHEDULE_FILE ?= /var/lib/awx/beat.db
 
 # TODO change this to quay.io when set up
-DOCKER_TAG_BASE ?= ansible
 DEV_DOCKER_TAG_BASE ?= gcr.io/ansible-tower-engineering
+
 # Python packages to install only from source (not from binary wheels)
 # Comma separated list
 SRC_ONLY_PKGS ?= cffi,pycparser,psycopg2,twilio,pycurl
@@ -567,9 +567,9 @@ awx/projects:
 # Note: if coming from Local Docker, consider migrating your data first using `tools/ansible/migrate.yml`
 run-awx: awx/projects
 	# Template sources
-	ansible-playbook -i tools/ansible/inventory tools/ansible/sources.yml
+	ansible-playbook -i tools/ansible/inventory tools/ansible/sources.yml -e "dev_env=true"
 	# Run containers
-	cd tools/docker-community && TAG=$(COMPOSE_TAG) DOCKER_TAG_BASE=$(DOCKER_TAG_BASE) docker-compose -f docker-compose-community.yml $(COMPOSE_UP_OPTS) up task
+	cd tools/docker-compose && TAG=$(COMPOSE_TAG) docker-compose -f docker-compose.yml $(COMPOSE_UP_OPTS) up task
 
 # Docker isolated rampart
 docker-compose-isolated: awx/projects
@@ -579,7 +579,10 @@ COMPOSE_UP_OPTS ?=
 
 # Docker Compose Development environment
 docker-compose: docker-auth awx/projects
-	cd tools/docker-compose && CURRENT_UID=$(shell id -u) OS="$(shell docker info | grep 'Operating System')" TAG=$(COMPOSE_TAG) DEV_DOCKER_TAG_BASE=$(DEV_DOCKER_TAG_BASE) docker-compose -f docker-compose.yml $(COMPOSE_UP_OPTS) up awx
+	# Template sources & docker-compose.yml
+	ansible-playbook -i tools/ansible/inventory tools/ansible/sources.yml \
+	    -e awx_image=$(DEV_DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG)
+	docker-compose -f tools/docker-compose/_sources/docker-compose.yml $(COMPOSE_UP_OPTS) up awx
 
 docker-compose-cluster: docker-auth awx/projects
 	CURRENT_UID=$(shell id -u) TAG=$(COMPOSE_TAG) DEV_DOCKER_TAG_BASE=$(DEV_DOCKER_TAG_BASE) docker-compose -f tools/docker-compose-cluster.yml up
