@@ -11,6 +11,7 @@
     services:
       - postgres
     state: present
+    recreate: always
 
 - name: Database dump to local filesystem
   shell: |
@@ -25,6 +26,19 @@
 - name: Start docker-community postgres container
   shell: |
     docker-compose -f ../docker-community/docker-compose-community.yml up -d postgres
+
+- name: Start Community Compose database container
+  docker_compose:
+    project_src: "../docker-community"
+    files: "docker-compose-community.yml"
+    services:
+      - postgres
+    state: present
+    recreate: always
+
+- name: Wait for postgres to initialize
+  wait_for:
+    timeout: 3
 
 - name: Restore to new postgres container
   shell: |
