@@ -65,3 +65,4 @@
   template:
     src: docker-compose.yml.j2
     dest: "{{ sources_dest }}/{{ compose_name }}"
+    mode: '0600'
