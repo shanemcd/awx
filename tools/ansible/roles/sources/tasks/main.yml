@@ -54,8 +54,6 @@
   set_fact:
     user_id: "'{{ current_user.stdout }}'"
 
-- debug: var=awx_version
-
 - name: Set global version if not provided
   set_fact:
     awx_image_tag: "{{ lookup('file', playbook_dir + '/../../VERSION') }}"
