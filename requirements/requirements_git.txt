@@ -1,1 +1,2 @@
 git+https://github.com/ansible/system-certifi.git@devel#egg=certifi
+git+https://github.com/fosterseth/sockceptor.git@feat_work_list_unit_id#egg=receptorctl&subdirectory=receptorctl
