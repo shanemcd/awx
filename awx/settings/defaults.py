@@ -360,6 +360,7 @@ AUTHENTICATION_BACKENDS = (
     'awx.sso.backends.LDAPBackend5',
     'awx.sso.backends.RADIUSBackend',
     'awx.sso.backends.TACACSPlusBackend',
+    'social_core.backends.keycloak.KeycloakOAuth2',
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.github.GithubOAuth2',
     'social_core.backends.github.GithubOrganizationOAuth2',
@@ -532,6 +533,12 @@ SOCIAL_AUTH_SAML_ENABLED_IDPS = {}
 
 SOCIAL_AUTH_SAML_ORGANIZATION_ATTR = {}
 SOCIAL_AUTH_SAML_TEAM_ATTR = {}
+
+SOCIAL_AUTH_KEYCLOAK_KEY = 'aap'
+SOCIAL_AUTH_KEYCLOAK_SECRET = ''
+SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY = ""
+SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = "http://0.0.0.0:8081/auth/realms/Ansible/protocol/openid-connect/auth"
+SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL = "http://keycloak:8080/auth/realms/Ansible/protocol/openid-connect/token"
 
 # Any ANSIBLE_* settings will be passed to the task runner subprocess
 # environment
