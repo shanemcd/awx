@@ -421,7 +421,7 @@ ui-zuul-lint-and-test:
 	$(NPM_BIN) --prefix awx/ui_next install
 	$(NPM_BIN) run --prefix awx/ui_next lint
 	$(NPM_BIN) run --prefix awx/ui_next prettier-check
-	$(NPM_BIN) run --prefix awx/ui_next test -- --coverage --watchAll=false
+	$(NPM_BIN) run --prefix awx/ui_next test -- --watchAll=false
 
 
 # Build a pip-installable package into dist/ with a timestamped version number.
