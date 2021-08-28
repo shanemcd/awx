@@ -36,3 +36,11 @@ of the problem is helpful.
 ```
 
 ```
+
+<!--- changelog-entry
+# Fill in the values below to have an entry automatically added to the next release changelog
+# Leaving 'msg' blank will not generate a changelog entry for this PR.
+---
+type: 'enhancement' # or 'bugfix'
+msg: ''
+-->
