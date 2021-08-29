@@ -1,0 +1,42 @@
+name: Release AWX
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+        default: ''
+      confirm:
+        description: 'Are you sure? Set this to 1'
+        required: true
+        default: ''
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: |
+          if [[ ${{ github.event.inputs.confirm }} -ne 1 ]]; then
+            >&2 echo "Confirm must be '1'"
+            exit 1
+          fi
+
+          if [[ ${{ github.event.inputs.version }} == "" ]]; then
+            >&2 echo "Set version to continue."
+            exit 1
+          fi
+
+          exit 0
+
+      - run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+          pip3 install ansible-core
+          ansible-playbook -v tools/ansible/release.yml \
+            -e repo=${{ github.repository }} \
+            -e version=${{ github.event.inputs.version }} \
+            -e github_token=${{ secrets.GITHUB_TOKEN }}
+
+
