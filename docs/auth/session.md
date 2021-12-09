@@ -49,7 +49,7 @@ The name of the cookie is configurable by Tower Configuration setting `SESSION_C
 
 The duration of the cookie is configurable by Tower Configuration setting `SESSION_COOKIE_AGE` under
 category `authentication`. It is an integer denoting the number of seconds the session cookie should
-live. The default session cookie age is two weeks.  
+live. The default session cookie age is two weeks.
 
 After a valid session is acquired, a client should provide the `awx_sessionid` as a cookie for subsequent requests
 in order to be authenticated. For example:
