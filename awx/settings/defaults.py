@@ -983,3 +983,8 @@ DJANGO_GUID = {'GUID_HEADER_NAME': 'X-API-Request-Id'}
 DEFAULT_EXECUTION_QUEUE_NAME = 'default'
 # Name of the default controlplane queue
 DEFAULT_CONTROL_PLANE_QUEUE_NAME = 'controlplane'
+
+# Extend container runtime attributes.
+# For example, to disable SELinux in containers for podman
+# DEFAULT_CONTAINER_RUN_OPTIONS = ['--security-opt', 'label=disable']
+DEFAULT_CONTAINER_RUN_OPTIONS = []
