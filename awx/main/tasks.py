@@ -58,6 +58,8 @@ import ansible_runner.cleanup
 from dateutil.parser import parse as parse_date
 
 # AWX
+from awx import __version__ as awx_application_version
+from awx.main.access import access_registry
 from awx.main.constants import ACTIVE_STATES
 from awx.main.dispatch.publish import task
 from awx.main.dispatch import get_local_queuename
