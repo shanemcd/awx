@@ -60,7 +60,7 @@ class AWXConsumerBase(object):
         return f'listening on {self.queues}'
 
     def control(self, body):
-        logger.warn(body)
+        logger.warning(body)
         control = body.get('control')
         if control in ('status', 'running'):
             reply_queue = body['reply_to']
@@ -118,7 +118,7 @@ class AWXConsumerBase(object):
 
     def stop(self, signum, frame):
         self.should_stop = True
-        logger.warn('received {}, stopping'.format(signame(signum)))
+        logger.warning('received {}, stopping'.format(signame(signum)))
         self.worker.on_stop()
         raise SystemExit()
 
@@ -137,7 +137,7 @@ class AWXConsumerPG(AWXConsumerBase):
     def run(self, *args, **kwargs):
         super(AWXConsumerPG, self).run(*args, **kwargs)
 
-        logger.warn(f"Running worker {self.name} listening to queues {self.queues}")
+        logger.warning(f"Running worker {self.name} listening to queues {self.queues}")
         init = False
 
         while True:
@@ -153,7 +153,7 @@ class AWXConsumerPG(AWXConsumerBase):
                     if self.should_stop:
                         return
             except psycopg2.InterfaceError:
-                logger.warn("Stale Postgres message bus connection, reconnecting")
+                logger.warning("Stale Postgres message bus connection, reconnecting")
                 continue
 
 
@@ -188,7 +188,7 @@ class BaseWorker(object):
                 if 'uuid' in body:
                     uuid = body['uuid']
                     finished.put(uuid)
-        logger.warn('worker exiting gracefully pid:{}'.format(os.getpid()))
+        logger.warning('worker exiting gracefully pid:{}'.format(os.getpid()))
 
     def perform_work(self, body):
         raise NotImplementedError()

@@ -450,15 +450,15 @@ def cluster_node_health_check(node):
     Used for the health check endpoint, refreshes the status of the instance, but must be ran on target node
     """
     if node == '':
-        logger.warn('Local health check incorrectly called with blank string')
+        logger.warning('Local health check incorrectly called with blank string')
         return
     elif node != settings.CLUSTER_HOST_ID:
-        logger.warn(f'Local health check for {node} incorrectly sent to {settings.CLUSTER_HOST_ID}')
+        logger.warning(f'Local health check for {node} incorrectly sent to {settings.CLUSTER_HOST_ID}')
         return
     try:
         this_inst = Instance.objects.me()
     except Instance.DoesNotExist:
-        logger.warn(f'Instance record for {node} missing, could not check capacity.')
+        logger.warning(f'Instance record for {node} missing, could not check capacity.')
         return
     this_inst.local_health_check()
 
@@ -466,12 +466,12 @@ def cluster_node_health_check(node):
 @task(queue=get_local_queuename)
 def execution_node_health_check(node):
     if node == '':
-        logger.warn('Remote health check incorrectly called with blank string')
+        logger.warning('Remote health check incorrectly called with blank string')
         return
     try:
         instance = Instance.objects.get(hostname=node)
     except Instance.DoesNotExist:
-        logger.warn(f'Instance record for {node} missing, could not check capacity.')
+        logger.warning(f'Instance record for {node} missing, could not check capacity.')
         return
 
     if instance.node_type != 'execution':
@@ -492,7 +492,7 @@ def execution_node_health_check(node):
     if data['errors']:
         formatted_error = "\n".join(data["errors"])
         if prior_capacity:
-            logger.warn(f'Health check marking execution node {node} as lost, errors:\n{formatted_error}')
+            logger.warning(f'Health check marking execution node {node} as lost, errors:\n{formatted_error}')
         else:
             logger.info(f'Failed to find capacity of new or lost execution node {node}, errors:\n{formatted_error}')
     else:
@@ -525,9 +525,9 @@ def inspect_execution_nodes(instance_list):
             elif settings.MESH_AUTODISCOVERY_ENABLED:
                 defaults = dict(enabled=False)
                 (changed, instance) = Instance.objects.register(hostname=hostname, node_type='execution', defaults=defaults)
-                logger.warn(f"Registered execution node '{hostname}' (marked disabled by default)")
+                logger.warning(f"Registered execution node '{hostname}' (marked disabled by default)")
             else:
-                logger.warn(f"Unrecognized node on mesh advertising ansible-runner work type: {hostname}")
+                logger.warning(f"Unrecognized node on mesh advertising ansible-runner work type: {hostname}")
 
             was_lost = instance.is_lost(ref_time=nowtime)
             last_seen = parse_date(ad['Time'])
@@ -543,7 +543,7 @@ def inspect_execution_nodes(instance_list):
                 # if the instance *was* lost, but has appeared again,
                 # attempt to re-establish the initial capacity and version
                 # check
-                logger.warn(f'Execution node attempting to rejoin as instance {hostname}.')
+                logger.warning(f'Execution node attempting to rejoin as instance {hostname}.')
                 execution_node_health_check.apply_async([hostname])
             elif instance.capacity == 0 and instance.enabled:
                 # nodes with proven connection but need remediation run health checks are reduced frequency
@@ -714,7 +714,7 @@ def awx_periodic_scheduler():
             template = schedule.unified_job_template
             schedule.update_computed_fields()  # To update next_run timestamp.
             if template.cache_timeout_blocked:
-                logger.warn("Cache timeout is in the future, bypassing schedule for template %s" % str(template.id))
+                logger.warning("Cache timeout is in the future, bypassing schedule for template %s" % str(template.id))
                 continue
             try:
                 job_kwargs = schedule.get_job_kwargs()
@@ -768,7 +768,7 @@ def handle_work_error(task_id, *args, **kwargs):
                 instance = UnifiedJob.get_instance_by_type(each_task['type'], each_task['id'])
                 if not instance:
                     # Unknown task type
-                    logger.warn("Unknown task type: {}".format(each_task['type']))
+                    logger.warning("Unknown task type: {}".format(each_task['type']))
                     continue
             except ObjectDoesNotExist:
                 logger.warning('Missing {} `{}` in error callback.'.format(each_task['type'], each_task['id']))
@@ -815,7 +815,7 @@ def handle_success_and_failure_notifications(job_id):
             time.sleep(1)
             uj = UnifiedJob.objects.get(pk=job_id)
 
-    logger.warn(f"Failed to even try to send notifications for job '{uj}' due to job not being in finished state.")
+    logger.warning(f"Failed to even try to send notifications for job '{uj}' due to job not being in finished state.")
 
 
 @task(queue=get_local_queuename)
@@ -1383,7 +1383,7 @@ class BaseTask(object):
         if self.instance.cancel_flag or self.instance.status == 'canceled':
             cancel_wait = (now() - self.instance.modified).seconds if self.instance.modified else 0
             if cancel_wait > 5:
-                logger.warn('Request to cancel {} took {} seconds to complete.'.format(self.instance.log_format, cancel_wait))
+                logger.warning('Request to cancel {} took {} seconds to complete.'.format(self.instance.log_format, cancel_wait))
             return True
         return False
 
@@ -3182,9 +3182,9 @@ class AWXReceptorJob:
                     logger.exception(f'An error was encountered while getting status for work unit {self.unit_id}')
 
                 if 'exceeded quota' in detail:
-                    logger.warn(detail)
+                    logger.warning(detail)
                     log_name = self.task.instance.log_format
-                    logger.warn(f"Could not launch pod for {log_name}. Exceeded quota.")
+                    logger.warning(f"Could not launch pod for {log_name}. Exceeded quota.")
                     self.task.update_model(self.task.instance.pk, status='pending')
                     return
                 # If ansible-runner ran, but an error occured at runtime, the traceback information
@@ -3204,7 +3204,7 @@ class AWXReceptorJob:
                             self.task.instance.result_traceback = detail
                             self.task.instance.save(update_fields=['result_traceback'])
                         else:
-                            logger.warn(f'No result details or output from {self.task.instance.log_format}, status:\n{unit_status}')
+                            logger.warning(f'No result details or output from {self.task.instance.log_format}, status:\n{unit_status}')
                     except Exception:
                         raise RuntimeError(detail)
 
