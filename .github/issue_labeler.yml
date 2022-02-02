@@ -1,2 +1,5 @@
 needs_triage:
   - '.*'
+"type:bug":
+  - "Please confirm the following"
+  - "Bugfix Pull Request"
