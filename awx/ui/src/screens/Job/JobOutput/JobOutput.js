@@ -121,7 +121,7 @@ function JobOutput({ job, eventRelatedSearchableKeys, eventSearchableKeys }) {
 
     if (isJobRunning(job.status)) {
       connectJobSocket(job, (data) => {
-        if (data.group_name === 'job_events') {
+        if (data.group_name === `${job.type}_events`) {
           if (data.counter && data.counter > jobSocketCounter.current) {
             jobSocketCounter.current = data.counter;
           }
@@ -131,7 +131,9 @@ function JobOutput({ job, eventRelatedSearchableKeys, eventSearchableKeys }) {
             jobSocketCounter.current = data.final_counter;
           }
           if (data.status) {
-            setJobStatus(data.status);
+            setTimeout(() => {
+              setJobStatus(data.status);
+            }, 500);
           }
         }
       });
