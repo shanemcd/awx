@@ -7,7 +7,9 @@ from awx import __version__ as tower_version
 
 # Prepare the AWX environment.
 from awx import prepare_env, MODE
-from channels.routing import get_default_application  # noqa
+from channels.routing import get_defa
+
+ult_application  # noqa
 
 prepare_env()  # NOQA
 
