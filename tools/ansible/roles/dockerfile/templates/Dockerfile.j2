@@ -5,7 +5,7 @@
 ###
 
 # Build container
-FROM quay.io/centos/centos:8 as builder
+FROM quay.io/centos/centos:stream8 as builder
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
@@ -84,7 +84,7 @@ RUN /var/lib/awx/venv/awx/bin/awx-manage collectstatic --noinput --clear
 {% endif %}
 
 # Final container(s)
-FROM quay.io/centos/centos:8
+FROM quay.io/centos/centos:stream8
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
