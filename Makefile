@@ -1,5 +1,4 @@
 PYTHON ?= python3.8
-PYTHON_VERSION = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_version; print(get_python_version())")
 OFFICIAL ?= no
 NODE ?= node
 NPM_BIN ?= npm
@@ -40,7 +39,7 @@ I18N_FLAG_FILE = .i18n_built
 	receiver test test_unit test_coverage coverage_html \
 	dev_build release_build sdist \
 	ui-release ui-devel \
-	VERSION docker-compose-sources \
+	VERSION PYTHON_VERSION docker-compose-sources \
 	.git/hooks/pre-commit
 
 clean-tmp:
@@ -280,7 +279,7 @@ api-lint:
 
 awx-link:
 	[ -d "/awx_devel/awx.egg-info" ] || $(PYTHON) /awx_devel/setup.py egg_info_dev
-	cp -f /tmp/awx.egg-link /var/lib/awx/venv/awx/lib/python$(PYTHON_VERSION)/site-packages/awx.egg-link
+	cp -f /tmp/awx.egg-link /var/lib/awx/venv/awx/lib/$(PYTHON)/site-packages/awx.egg-link
 
 TEST_DIRS ?= awx/main/tests/unit awx/main/tests/functional awx/conf/tests awx/sso/tests
 
@@ -537,6 +536,9 @@ psql-container:
 
 VERSION:
 	@echo "awx: $(VERSION)"
+
+PYTHON_VERSION:
+	@echo "$(PYTHON)" | sed 's:python::'
 
 Dockerfile: tools/ansible/roles/dockerfile/templates/Dockerfile.j2
 	ansible-playbook tools/ansible/dockerfile.yml
