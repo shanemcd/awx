@@ -28,8 +28,6 @@ RUN dnf -y update && \
     libffi-devel \
     libtool-ltdl-devel \
     make \
-    hostname \
-    iproute \
 {% if not headless|bool %}
     nodejs \
 {% endif %}
@@ -152,6 +150,8 @@ RUN dnf -y install \
     nodejs \
     nss \
     make \
+    hostname \
+    iproute \
     patch \
     socat \
     tmux \
