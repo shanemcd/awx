@@ -44,7 +44,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 
-from django_guid.middleware import GuidMiddleware
+from django_guid import get_guid
 
 # Django-CRUM
 from crum import impersonate
@@ -1055,7 +1055,7 @@ class BaseTask(object):
         self.cleanup_paths = []
         self.parent_workflow_job_id = None
         self.host_map = {}
-        self.guid = GuidMiddleware.get_guid()
+        self.guid = get_guid()
         self.job_created = None
         self.recent_event_timings = deque(maxlen=settings.MAX_WEBSOCKET_EVENT_RATE)
 
