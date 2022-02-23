@@ -229,7 +229,7 @@ function SubscriptionStep() {
                   username: username.value,
                   password: password.value,
                 }}
-                selectedSubscripion={subscription?.value}
+                selectedSubscription={subscription?.value}
                 onClose={closeModal}
                 onConfirm={(value) => subscriptionHelpers.setValue(value)}
               />
