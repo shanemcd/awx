@@ -89,3 +89,8 @@ except IOError:
 # The below runs AFTER all of the custom settings are imported.
 
 DATABASES['default'].setdefault('OPTIONS', dict()).setdefault('application_name', f'{CLUSTER_HOST_ID}-{os.getpid()}-{" ".join(sys.argv)}'[:63])  # noqa
+
+DEFAULT_CONTAINER_VOLUME_MOUNTS = [
+    '/etc/pki/ca-trust:/etc/pki/ca-trust:O',
+    '/usr/share/pki:/usr/share/pki:O',
+]
