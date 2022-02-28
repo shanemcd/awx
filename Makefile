@@ -567,3 +567,6 @@ messages:
 		. $(VENV_BASE)/awx/bin/activate; \
 	fi; \
 	$(PYTHON) manage.py makemessages -l $(LANG) --keep-pot
+
+print-%:
+	@echo $($*)
