@@ -8,19 +8,48 @@ jobs:
   promote:
     runs-on: ubuntu-latest
     steps:
-      - name: Log in to GHCR
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Checkout awx
+        uses: actions/checkout@v2
 
-      - name: Log in to Quay
-        run: |
-          echo ${{ secrets.QUAY_TOKEN }} | docker login quay.io -u ${{ secrets.QUAY_USER }} --password-stdin
+      - name: Get python version from Makefile
+        run: echo py_version=`make PYTHON_VERSION` >> $GITHUB_ENV
 
-      - name: Re-tag and promote awx image
+      - name: Install python ${{ env.py_version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.py_version }}
+
+      - name: Set official collection namespace
+        run: echo collection_namespace=awx >> $GITHUB_ENV
+        if: ${{ github.repository_owner == 'ansible' }}
+
+      - name: Set unofficial collection namespace
+        run: echo collection_namespace=${{ github.repository_owner }} >> $GITHUB_ENV
+        if: ${{ github.repository_owner != 'ansible' }}
+
+      - name: Build collection and publish to galaxy
         run: |
-          docker pull ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
-          docker tag ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }} quay.io/${{ github.repository }}:${{ github.event.release.tag_name }}
-          docker tag ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }} quay.io/${{ github.repository }}:latest
-          docker push quay.io/${{ github.repository }}:${{ github.event.release.tag_name }}
-          docker push quay.io/${{ github.repository }}:latest
+          mkdir -p /tmp/collection-build/
+          ansible-playbook awx_collection/tools/template_galaxy.yml \
+             -e collection_version_override=$(make print-COLLECTION_VERSION) \
+             -e collection_namespace=${{ env.collection_namespace }} -v
+          ansible-galaxy collection build awx_collection_build --output-path=/tmp/collection-build/ --force -v
+          ansible-galaxy collection publish --token=${{ secrets.GALAXY_TOKEN }} /tmp/collection-build/*.tar.gz
+
+
+      # - name: Log in to GHCR
+      #   run: |
+      #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # - name: Log in to Quay
+      #   run: |
+      #     echo ${{ secrets.QUAY_TOKEN }} | docker login quay.io -u ${{ secrets.QUAY_USER }} --password-stdin
+
+      # - name: Re-tag and promote awx image
+      #   run: |
+      #     docker pull ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+      #     docker tag ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }} quay.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+      #     docker tag ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }} quay.io/${{ github.repository }}:latest
+      #     docker push quay.io/${{ github.repository }}:${{ github.event.release.tag_name }}
+      #     docker push quay.io/${{ github.repository }}:latest
           
