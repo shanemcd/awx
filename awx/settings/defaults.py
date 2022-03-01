@@ -584,7 +584,10 @@ GALAXY_IGNORE_CERTS = False
 
 # Additional paths to show for jobs using process isolation.
 # Note: This setting may be overridden by database settings.
-AWX_ISOLATION_SHOW_PATHS = []
+AWX_ISOLATION_SHOW_PATHS = [
+    '/etc/pki/ca-trust:/etc/pki/ca-trust:O',
+    '/usr/share/pki:/usr/share/pki:O',
+]
 
 # The directory in which the service will create new temporary directories for job
 # execution and isolation (such as credential files and custom
@@ -988,8 +991,3 @@ DEFAULT_CONTROL_PLANE_QUEUE_NAME = 'controlplane'
 # For example, to disable SELinux in containers for podman
 # DEFAULT_CONTAINER_RUN_OPTIONS = ['--security-opt', 'label=disable']
 DEFAULT_CONTAINER_RUN_OPTIONS = []
-
-# List of default exposed container volume mounts
-# This is useful when the EE container needs to access host/node information
-# like /etc/pki/ca-trust/source/anchors
-DEFAULT_CONTAINER_VOLUME_MOUNTS = []
