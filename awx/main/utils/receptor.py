@@ -147,7 +147,7 @@ def run_until_complete(node, timing_data=None, **kwargs):
         if settings.RECEPTOR_RELEASE_WORK:
             res = receptor_ctl.simple_command(f"work release {unit_id}")
             if res != {'released': unit_id}:
-                logger.warn(f'Could not confirm release of receptor work unit id {unit_id} from {node}, data: {res}')
+                logger.warning(f'Could not confirm release of receptor work unit id {unit_id} from {node}, data: {res}')
 
         receptor_ctl.close()
 
