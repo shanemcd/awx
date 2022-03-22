@@ -18,7 +18,7 @@ LDAP ?= false
 
 VENV_BASE ?= /var/lib/awx/venv
 
-DEV_DOCKER_TAG_BASE ?= quay.io/awx
+DEV_DOCKER_TAG_BASE ?= ghcr.io/ansible
 DEVEL_IMAGE_NAME ?= $(DEV_DOCKER_TAG_BASE)/awx_devel:$(COMPOSE_TAG)
 
 RECEPTOR_IMAGE ?= quay.io/ansible/receptor:devel
@@ -415,7 +415,7 @@ ui-test-general:
 	$(NPM_BIN) --prefix awx/ui install
 	$(NPM_BIN) run --prefix awx/ui pretest
 	$(NPM_BIN) run --prefix awx/ui/ test-general --runInBand
-	
+
 # Build a pip-installable package into dist/ with a timestamped version number.
 dev_build:
 	$(PYTHON) setup.py dev_build
