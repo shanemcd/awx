@@ -723,6 +723,9 @@ class SourceControlMixin(BaseTask):
                 local_project_sync.refresh_from_db()
                 if isinstance(self.instance, Job):
                     self.instance = self.update_model(self.instance.pk, scm_revision=local_project_sync.scm_revision)
+                elif isinstance(self.instance, InventoryUpdate):
+                    self.instance.inventory_source.scm_last_revision = local_project_sync.scm_revision
+                    self.instance.inventory_source.save(update_fields=['scm_last_revision'])
             except Exception:
                 local_project_sync.refresh_from_db()
                 if local_project_sync.status != 'canceled':
