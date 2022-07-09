@@ -1330,57 +1330,6 @@ class RunProjectUpdate(BaseTask):
                 inv_src.scm_last_revision = scm_revision
                 inv_src.save(update_fields=['scm_last_revision'])
 
-    def release_lock(self, instance):
-        try:
-            fcntl.lockf(self.lock_fd, fcntl.LOCK_UN)
-        except IOError as e:
-            logger.error("I/O error({0}) while trying to release lock file [{1}]: {2}".format(e.errno, instance.get_lock_file(), e.strerror))
-            os.close(self.lock_fd)
-            raise
-
-        os.close(self.lock_fd)
-        self.lock_fd = None
-
-    '''
-    Note: We don't support blocking=False
-    '''
-
-    def acquire_lock(self, instance, blocking=True):
-        lock_path = instance.get_lock_file()
-        if lock_path is None:
-            # If from migration or someone blanked local_path for any other reason, recoverable by save
-            instance.save()
-            lock_path = instance.get_lock_file()
-            if lock_path is None:
-                raise RuntimeError(u'Invalid lock file path')
-
-        try:
-            self.lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT)
-        except OSError as e:
-            logger.error("I/O error({0}) while trying to open lock file [{1}]: {2}".format(e.errno, lock_path, e.strerror))
-            raise
-
-        start_time = time.time()
-        while True:
-            try:
-                instance.refresh_from_db(fields=['cancel_flag'])
-                if instance.cancel_flag:
-                    logger.debug("ProjectUpdate({0}) was canceled".format(instance.pk))
-                    return
-                fcntl.lockf(self.lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except IOError as e:
-                if e.errno not in (errno.EAGAIN, errno.EACCES):
-                    os.close(self.lock_fd)
-                    logger.error("I/O error({0}) while trying to aquire lock on file [{1}]: {2}".format(e.errno, lock_path, e.strerror))
-                    raise
-                else:
-                    time.sleep(1.0)
-        waiting_time = time.time() - start_time
-
-        if waiting_time > 1.0:
-            logger.info('{} spent {} waiting to acquire lock for local source tree ' 'for path {}.'.format(instance.log_format, waiting_time, lock_path))
-
     def pre_run_hook(self, instance, private_data_dir):
         super(RunProjectUpdate, self).pre_run_hook(instance, private_data_dir)
         # re-create root project folder if a natural disaster has destroyed it
