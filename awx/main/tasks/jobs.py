@@ -1355,7 +1355,10 @@ class RunProjectUpdate(BaseTask):
         # to be consistent with the ansible-runner model,
         # that is moved into the runner project folder here
         awx_playbooks = self.get_path_to('../../', 'playbooks')
-        shutil.copytree(awx_playbooks, os.path.join(private_data_dir, 'project'))
+        project_dir = os.path.join(private_data_dir, 'project')
+        if os.path.exists(project_dir):
+            shutil.rmtree(project_dir)
+        shutil.copytree(awx_playbooks, project_dir)
 
     @staticmethod
     def clear_project_cache(cache_dir, keep_value):
@@ -1380,6 +1383,8 @@ class RunProjectUpdate(BaseTask):
         """
         project_path = project.get_project_path(check_if_exists=False)
         destination_folder = os.path.join(job_private_data_dir, 'project')
+        if os.path.exists(destination_folder):
+            shutil.rmtree(destination_folder)
         shutil.copytree(project_path, destination_folder, ignore=shutil.ignore_patterns('.git'), symlinks=True)
 
         # copy over the roles and collection cache to job folder
