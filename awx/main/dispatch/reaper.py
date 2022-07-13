@@ -1,5 +1,6 @@
 from datetime import timedelta
 import logging
+import traceback
 
 from django.db.models import Q
 from django.utils.timezone import now as tz_now
@@ -14,6 +15,8 @@ def reap_job(j, status):
     if UnifiedJob.objects.get(id=j.id).status not in ('running', 'waiting'):
         # just in case, don't reap jobs that aren't running
         return
+    logger.info("Reaping job: {}".format(j.id))
+    logger.info(traceback.print_stack())
     j.status = status
     j.start_args = ''  # blank field to remove encrypted passwords
     j.job_explanation += ' '.join(
