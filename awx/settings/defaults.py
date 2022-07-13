@@ -1013,3 +1013,6 @@ DEFAULT_CONTAINER_RUN_OPTIONS = ['--network', 'slirp4netns:enable_ipv6=true']
 
 # Mount exposed paths as hostPath resource in k8s/ocp
 AWX_MOUNT_ISOLATED_PATHS_ON_K8S = False
+
+# Number of seconds a job can stay in waiting without being reaped
+JOB_WAITING_GRACE_PERIOD = 60

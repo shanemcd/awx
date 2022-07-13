@@ -425,7 +425,7 @@ class AutoscalePool(WorkerPool):
 
         # if we are not in the dangerous situation of queue backup then clear old waiting jobs
         if self.workers and max(len(w.managed_tasks) for w in self.workers) <= 1:
-            reaper.reap_waiting()
+            reaper.reap_waiting(grace_period=settings.JOB_WAITING_GRACE_PERIOD)
 
         # if the database says a job is running on this node, but it's *not*,
         # then reap it
