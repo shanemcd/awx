@@ -99,12 +99,17 @@ class AWXConsumerBase(object):
                 queue = self.total_messages % len(self.pool)
         else:
             queue = 0
+        write_start = time.time()
         self.pool.write(queue, body)
+        delta = time.time() - write_start
+        if isinstance(body, dict):
+            if delta > 1:
+                logger.warning(f'Took {delta} seconds to write {body.get("task")} to worker queue')
         self.total_messages += 1
         self.record_statistics()
         if isinstance(body, dict) and 'time_pub' in body:
             tq = time.time()
-            if tq - body['time_pub'] > 0.05:
+            if tq - body['time_pub'] > 0.5:
                 logger.warning(
                     f'Dispatching task took {body.get("task")} too long: notify {body["time_ack"] - body["time_pub"]:.4f} queued {tq - body["time_ack"]:.4f}'
                 )
@@ -112,7 +117,12 @@ class AWXConsumerBase(object):
     def record_statistics(self):
         if time.time() - self.last_stats > 1:  # buffer stat recording to once per second
             try:
-                self.redis.set(f'awx_{self.name}_statistics', self.pool.debug())
+                debug_data = self.pool.debug()
+                stats_start = time.time()
+                self.redis.set(f'awx_{self.name}_statistics', debug_data)
+                delta = time.time() - stats_start
+                if delta > 1.0:
+                    logger.warning(f'Took {delta} seconds to push statistics to redis')
                 self.last_stats = time.time()
             except Exception:
                 logger.exception(f"encountered an error communicating with redis to store {self.name} statistics")

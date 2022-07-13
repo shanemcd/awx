@@ -253,6 +253,7 @@ class WorkerPool(object):
         return idx, worker
 
     def debug(self, *args, **kwargs):
+        start_time = time.time()
         tmpl = Template(
             'Recorded at: {{ dt }} \n'
             '{{ pool.name }}[pid:{{ pool.pid }}] workers total={{ workers|length }} {{ meta }} \n'
@@ -278,7 +279,11 @@ class WorkerPool(object):
             '{% endfor %}'
         )
         now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-        return tmpl.render(pool=self, workers=self.workers, meta=self.debug_meta, dt=now)
+        ret = tmpl.render(pool=self, workers=self.workers, meta=self.debug_meta, dt=now)
+        delta = time.time() - start_time
+        if delta > 1.0:
+            logger.warning(f'Took {delta} seconds to render debug template')
+        return ret
 
     def write(self, preferred_queue, body):
         queue_order = sorted(range(len(self.workers)), key=lambda x: -1 if x == preferred_queue else x)
@@ -367,6 +372,7 @@ class AutoscalePool(WorkerPool):
         if there's an outage, this method _can_ throw various
         django.db.utils.Error exceptions.  Act accordingly.
         """
+        start_time = time.time()
         orphaned = []
         for w in self.workers[::]:
             if not w.alive:
@@ -423,7 +429,14 @@ class AutoscalePool(WorkerPool):
         for worker in self.workers:
             worker.calculate_managed_tasks()
             running_uuids.extend(list(worker.managed_tasks.keys()))
+        delta = time.time() - start_time
+        if delta > 1.0:
+            logger.warning(f'Took {delta} for internal part of cleanup')
+        start_time = time.time()
         reaper.reap(excluded_uuids=running_uuids)
+        delta = time.time() - start_time
+        if delta > 1.0:
+            logger.warning(f'Took {delta} for job database cleanup')
 
     def up(self):
         if self.full:
