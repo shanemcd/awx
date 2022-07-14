@@ -3,6 +3,7 @@ import logging
 import traceback
 
 from django.db.models import Q
+from django.conf import settings
 from django.utils.timezone import now as tz_now
 from django.contrib.contenttypes.models import ContentType
 
@@ -56,10 +57,13 @@ def reap_job(j, status):
     logger.error(f'{j.log_format} is no longer {status_before}; reaping')
 
 
-def reap_waiting(instance=None, status='failed', grace_period=60, excluded_uuids=None):
+def reap_waiting(instance=None, status='failed', grace_period=None, excluded_uuids=None):
     """
     Reap all jobs in waiting for this instance.
     """
+    if grace_period is None:
+        grace_period = settings.JOB_WAITING_GRACE_PERIOD + settings.TASK_MANAGER_TIMEOUT
+
     me = instance
     if me is None:
         try:

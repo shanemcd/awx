@@ -341,7 +341,6 @@ class AutoscalePool(WorkerPool):
         self.max_workers += 7
 
         self.task_manager_timeout = settings.TASK_MANAGER_TIMEOUT
-        self.waiting_reaper_grace_period = self.task_manager_timeout + settings.JOB_WAITING_GRACE_PERIOD
 
     @property
     def should_grow(self):
@@ -436,7 +435,7 @@ class AutoscalePool(WorkerPool):
 
         # if we are not in the dangerous situation of queue backup then clear old waiting jobs
         if self.workers and max(len(w.managed_tasks) for w in self.workers) <= 1:
-            reaper.reap_waiting(grace_period=self.waiting_reaper_grace_period, excluded_uuids=running_uuids)
+            reaper.reap_waiting(excluded_uuids=running_uuids)
 
         reaper.reap(excluded_uuids=running_uuids)
         delta = time.time() - start_time
