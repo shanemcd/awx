@@ -1,0 +1,23 @@
+FROM registry.redhat.io/ansible-automation-platform-22/controller-rhel8@sha256:811bcb4f944d3c547412908902e9bd2913d3294e14b7cf8dd9699459e5101405
+
+COPY awx/api/generics.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/api/generics.py
+COPY awx/main/analytics/subsystem_metrics.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/analytics/subsystem_metrics.py
+COPY awx/main/dispatch/pool.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/dispatch/pool.py
+COPY awx/main/dispatch/publish.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/dispatch/publish.py
+COPY awx/main/dispatch/reaper.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/dispatch/reaper.py
+COPY awx/main/dispatch/worker/base.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/dispatch/worker/base.py
+COPY awx/main/dispatch/worker/task.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/dispatch/worker/task.py
+COPY awx/main/management/commands/run_dispatcher.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/management/commands/run_dispatcher.py
+COPY awx/main/models/ha.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/models/ha.py
+COPY awx/main/scheduler/task_manager.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/scheduler/task_manager.py
+COPY awx/main/tasks/callback.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tasks/callback.py
+COPY awx/main/tasks/jobs.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tasks/jobs.py
+COPY awx/main/tasks/signals.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tasks/signals.py
+COPY awx/main/tasks/system.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tasks/system.py
+COPY awx/main/tests/functional/test_dispatch.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tests/functional/test_dispatch.py
+COPY awx/main/tests/functional/test_tasks.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tests/functional/test_tasks.py
+COPY awx/main/tests/unit/tasks/test_signals.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tests/unit/tasks/test_signals.py
+COPY awx/main/tests/unit/test_tasks.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/tests/unit/test_tasks.py
+COPY awx/main/utils/update_model.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/main/utils/update_model.py
+COPY awx/settings/defaults.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/settings/defaults.py
+COPY awx/sso/views.py /var/lib/awx/venv/awx/lib/python3.9/site-packages/awx/sso/views.py
