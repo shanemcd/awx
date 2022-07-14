@@ -54,7 +54,7 @@ class TaskWorker(BaseWorker):
         if 'time_ack' in body:
             time_waiting = time.time() - body['time_ack']
             if time_waiting > 0.2:
-                logger.info(f'Task {task} spent {time_waiting:.4f} in worker IPC queue, look for Workers maxed log')
+                logger.info(f'Task {task} spent {time_waiting:.4f} in worker IPC queue')
         uuid = body.get('uuid', '<unknown>')
         args = body.get('args', [])
         kwargs = body.get('kwargs', {})

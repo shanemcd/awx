@@ -109,7 +109,7 @@ class AWXConsumerBase(object):
         self.record_statistics()
         if isinstance(body, dict) and 'time_pub' in body:
             tq = time.time()
-            if tq - body['time_pub'] > 0.5:
+            if tq - body['time_pub'] > 1.0:
                 logger.warning(
                     f'Dispatching task took {body.get("task")} too long: notify {body["time_ack"] - body["time_pub"]:.4f} queued {tq - body["time_ack"]:.4f}'
                 )

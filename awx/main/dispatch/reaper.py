@@ -33,9 +33,12 @@ def startup_reaping():
 
 
 def reap_job(j, status):
-    if UnifiedJob.objects.get(id=j.id).status not in ('running', 'waiting'):
+    j.refresh_from_db(fields=['status'])
+    status_before = j.status
+    if status_before not in ('running', 'waiting'):
         # just in case, don't reap jobs that aren't running
         return
+    # TODO: remove extra logs here
     logger.info("Reaping job: {}".format(j.id))
     logger.info(traceback.print_stack())
     j.status = status
@@ -50,10 +53,10 @@ def reap_job(j, status):
     if hasattr(j, 'send_notification_templates'):
         j.send_notification_templates('failed')
     j.websocket_emit_status(status)
-    logger.error('{} is no longer running; reaping'.format(j.log_format))
+    logger.error(f'{j.log_format} is no longer {status_before}; reaping')
 
 
-def reap_waiting(instance=None, status='failed', grace_period=60):
+def reap_waiting(instance=None, status='failed', grace_period=60, excluded_uuids=None):
     """
     Reap all jobs in waiting for this instance.
     """
@@ -66,11 +69,13 @@ def reap_waiting(instance=None, status='failed', grace_period=60):
             return
     now = tz_now()
     jobs = UnifiedJob.objects.filter(status='waiting', modified__lte=now - timedelta(seconds=grace_period), controller_node=me.hostname)
+    if excluded_uuids:
+        jobs = jobs.exclude(celery_task_id__in=excluded_uuids)
     for j in jobs:
         reap_job(j, status)
 
 
-def reap(instance=None, status='failed', excluded_uuids=[]):
+def reap(instance=None, status='failed', excluded_uuids=None):
     """
     Reap all jobs in running for this instance.
     """
@@ -84,6 +89,8 @@ def reap(instance=None, status='failed', excluded_uuids=[]):
     workflow_ctype_id = ContentType.objects.get_for_model(WorkflowJob).id
     jobs = UnifiedJob.objects.filter(
         Q(status='running') & (Q(execution_node=me.hostname) | Q(controller_node=me.hostname)) & ~Q(polymorphic_ctype_id=workflow_ctype_id)
-    ).exclude(celery_task_id__in=excluded_uuids)
+    )
+    if excluded_uuids:
+        jobs = jobs.exclude(celery_task_id__in=excluded_uuids)
     for j in jobs:
         reap_job(j, status)
