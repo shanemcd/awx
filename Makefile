@@ -117,7 +117,7 @@ virtualenv_awx:
 		fi; \
 	fi
 
-## Install third-party requirements needed for AWX's environment. 
+## Install third-party requirements needed for AWX's environment.
 # this does not use system site packages intentionally
 requirements_awx: virtualenv_awx
 	if [[ "$(PIP_OPTIONS)" == *"--no-index"* ]]; then \
@@ -224,14 +224,6 @@ dispatcher:
 		. $(VENV_BASE)/awx/bin/activate; \
 	fi; \
 	$(PYTHON) manage.py run_dispatcher
-
-
-## Run to start the zeromq callback receiver
-receiver:
-	@if [ "$(VENV_BASE)" ]; then \
-		. $(VENV_BASE)/awx/bin/activate; \
-	fi; \
-	$(PYTHON) manage.py run_callback_receiver
 
 nginx:
 	nginx -g "daemon off;"
@@ -381,7 +373,8 @@ clean-ui:
 awx/ui/node_modules:
 	NODE_OPTIONS=--max-old-space-size=6144 $(NPM_BIN) --prefix awx/ui --loglevel warn ci
 
-$(UI_BUILD_FLAG_FILE): awx/ui/node_modules
+$(UI_BUILD_FLAG_FILE):
+	$(MAKE) awx/ui/node_modules
 	$(PYTHON) tools/scripts/compilemessages.py
 	$(NPM_BIN) --prefix awx/ui --loglevel warn run compile-strings
 	$(NPM_BIN) --prefix awx/ui --loglevel warn run build

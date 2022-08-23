@@ -54,7 +54,7 @@ def job_stats_wrapup(job_identifier, event=None):
         logger.exception('Worker failed to save stats or emit notifications: Job {}'.format(job_identifier))
 
 
-class CallbackBrokerWorker(BaseWorker):
+class EventProcessor:
     """
     A worker implementation that deserializes callback event data and persists
     it into the database.
@@ -72,78 +72,8 @@ class CallbackBrokerWorker(BaseWorker):
 
     def __init__(self):
         self.buff = {}
-        self.redis = redis.Redis.from_url(settings.BROKER_URL)
         self.subsystem_metrics = s_metrics.Metrics(auto_pipe_execute=False)
-        self.queue_pop = 0
-        self.queue_name = settings.CALLBACK_QUEUE
         self.prof = AWXProfiler("CallbackBrokerWorker")
-        for key in self.redis.keys('awx_callback_receiver_statistics_*'):
-            self.redis.delete(key)
-
-    @cached_property
-    def pid(self):
-        """This needs to be obtained after forking, or else it will give the parent process"""
-        return os.getpid()
-
-    def read(self, queue):
-        try:
-            res = self.redis.blpop(self.queue_name, timeout=1)
-            if res is None:
-                return {'event': 'FLUSH'}
-            self.total += 1
-            self.queue_pop += 1
-            self.subsystem_metrics.inc('callback_receiver_events_popped_redis', 1)
-            self.subsystem_metrics.inc('callback_receiver_events_in_memory', 1)
-            return json.loads(res[1])
-        except redis.exceptions.RedisError:
-            logger.exception("encountered an error communicating with redis")
-            time.sleep(1)
-        except (json.JSONDecodeError, KeyError):
-            logger.exception("failed to decode JSON message from redis")
-        finally:
-            self.record_statistics()
-            self.record_read_metrics()
-
-        return {'event': 'FLUSH'}
-
-    def record_read_metrics(self):
-        if self.queue_pop == 0:
-            return
-        if self.subsystem_metrics.should_pipe_execute() is True:
-            queue_size = self.redis.llen(self.queue_name)
-            self.subsystem_metrics.set('callback_receiver_events_queue_size_redis', queue_size)
-            self.subsystem_metrics.pipe_execute()
-            self.queue_pop = 0
-
-    def record_statistics(self):
-        # buffer stat recording to once per (by default) 5s
-        if time.time() - self.last_stats > settings.JOB_EVENT_STATISTICS_INTERVAL:
-            try:
-                self.redis.set(f'awx_callback_receiver_statistics_{self.pid}', self.debug())
-                self.last_stats = time.time()
-            except Exception:
-                logger.exception("encountered an error communicating with redis")
-                self.last_stats = time.time()
-
-    def debug(self):
-        return f'.  worker[pid:{self.pid}] sent={self.total} rss={self.mb}MB {self.last_event}'
-
-    @property
-    def mb(self):
-        return '{:0.3f}'.format(psutil.Process(self.pid).memory_info().rss / 1024.0 / 1024.0)
-
-    def toggle_profiling(self, *args):
-        if not self.prof.is_started():
-            self.prof.start()
-            logger.error('profiling is enabled')
-        else:
-            filepath = self.prof.stop()
-            logger.error(f'profiling is disabled, wrote {filepath}')
-
-    def work_loop(self, *args, **kw):
-        if settings.AWX_CALLBACK_PROFILE:
-            signal.signal(signal.SIGUSR1, self.toggle_profiling)
-        return super(CallbackBrokerWorker, self).work_loop(*args, **kw)
 
     def flush(self, force=False):
         now = tz_now()

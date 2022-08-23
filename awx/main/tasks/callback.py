@@ -15,8 +15,10 @@ from django.utils.functional import cached_property
 from awx.main.redact import UriCleaner
 from awx.main.constants import MINIMAL_EVENTS, ANSIBLE_RUNNER_NEEDS_UPDATE_MESSAGE
 from awx.main.utils.update_model import update_model
-from awx.main.queue import CallbackQueueDispatcher
+from awx.main.queue import CallbackQueueDispatcher, AnsibleJSONEncoder
 from awx.main.tasks.signals import signal_callback
+
+from awx.main.dispatch.worker import EventProcessor
 
 logger = logging.getLogger('awx.main.tasks.callback')
 
@@ -35,6 +37,7 @@ class RunnerCallback:
         self.update_attempts = int(settings.DISPATCHER_DB_DOWNTOWN_TOLLERANCE / 5)
         self.wrapup_event_dispatched = False
         self.extra_update_fields = {}
+        self.event_processor = EventProcessor()
 
     def update_model(self, pk, _attempt=0, **updates):
         return update_model(self.model, pk, _attempt=0, _max_attempts=self.update_attempts, **updates)
@@ -164,7 +167,10 @@ class RunnerCallback:
             self.wrapup_event_dispatched = True
 
         event_data.setdefault(self.event_data_key, self.instance.id)
-        self.dispatcher.dispatch(event_data)
+        # self.dispatcher.dispatch(event_data)
+
+        self.event_processor.perform_work(event_data)
+
         self.event_ct += 1
 
         '''
@@ -207,7 +213,9 @@ class RunnerCallback:
             'guid': self.guid,
         }
         event_data.setdefault(self.event_data_key, self.instance.id)
-        self.dispatcher.dispatch(event_data)
+        # self.dispatcher.dispatch(event_data)
+        self.event_processor.perform_work(event_data)
+        self.event_processor.flush(force=True)
         if self.wrapup_event_type == 'EOF':
             self.wrapup_event_dispatched = True
 
