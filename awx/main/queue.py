@@ -27,6 +27,10 @@ class CallbackQueueDispatcher(object):
         self.queue = getattr(settings, 'CALLBACK_QUEUE', '')
         self.logger = logging.getLogger('awx.main.queue.CallbackQueueDispatcher')
         self.connection = redis.Redis.from_url(settings.BROKER_URL)
+        self.pipe = self.connection.pipeline()
 
     def dispatch(self, obj):
-        self.connection.rpush(self.queue, json.dumps(obj, cls=AnsibleJSONEncoder))
+        self.pipe.rpush(self.queue, json.dumps(obj, cls=AnsibleJSONEncoder))
+
+    def flush(self):
+        self.pipe.execute()
